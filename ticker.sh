@@ -9,6 +9,7 @@ source "$LIB_DIR/config.sh"
 source "$LIB_DIR/api.sh"
 source "$LIB_DIR/cache.sh"
 source "$LIB_DIR/widget.sh"
+source "$LIB_DIR/backend.sh"
 source "$LIB_DIR/menu.sh"
 
 # --update-once: sadece cache üret ve çık (timer çağırır)
