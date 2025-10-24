@@ -1,0 +1,44 @@
+# Backup files
+*.bak
+*.backup
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+log.txt
+
+# Temp files
+*.tmp
+tmp/
+temp/
+
+# Test files
+test_output/
+*.test
+
+# User config
+user-config.conf
+
+# Cache
+cache/
+.cache/
+
+# Archives
+*.tar
+*.tar.gz
+*.zip
+*.rar
+
+# Personal notes
+NOTES.md
+TODO.md
