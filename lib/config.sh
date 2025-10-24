@@ -26,8 +26,25 @@ EOF
 
 config_load(){
   config_ensure
-  # shellcheck disable=SC1090
-  source "$CONF_FILE"
+  
+  while IFS='=' read -r key value; do
+    [[ -z "$key" ]] && continue
+    [[ "$key" =~ ^[[:space:]]*# ]] && continue
+    [[ "$key" =~ ^[A-Z_][A-Z0-9_]*$ ]] || continue
+    
+    value="${value%%#*}"
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+    
+    case "$key" in
+      CRYPTO_SOURCE|GOLD_SOURCE|FX_SOURCE|SHOW_TRY|USE_PANGO|SHOW_SPARKLINE|\
+      SPARK_POINTS|LOG_ENABLE|XAU_TTL|FX_TTL|ALERT_BTC_ABOVE|ALERT_BTC_BELOW|\
+      ALERT_ETH_ABOVE|ALERT_ETH_BELOW|ALERT_COOLDOWN)
+        export "$key=$value"
+        ;;
+    esac
+  done < "$CONF_FILE"
+  
   : "${CRYPTO_SOURCE:=binance}" "${GOLD_SOURCE:=yahoo}" "${FX_SOURCE:=exchangerate}"
   : "${SHOW_TRY:=1}" "${USE_PANGO:=1}"
   : "${SHOW_SPARKLINE:=1}" "${SPARK_POINTS:=40}" "${LOG_ENABLE:=1}"
