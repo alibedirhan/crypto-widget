@@ -391,6 +391,238 @@ menu_settings(){
   done
 }
 
+menu_position_settings(){
+  config_load 2>/dev/null || true
+  local cur_pos="${POSITION:-top_right}"
+  local cur_x="${OFFSET_X:-16}"
+  local cur_y="${OFFSET_Y:-40}"
+  
+  echo
+  echo "Konum Seçenekleri:"
+  echo "  [1] Sol-Üst (top_left)"
+  echo "  [2] Orta-Üst (top_center)"
+  echo "  [3] Sağ-Üst (top_right) ← default"
+  echo "  [4] Sol-Orta (middle_left)"
+  echo "  [5] Tam Orta (center)"
+  echo "  [6] Sağ-Orta (middle_right)"
+  echo "  [7] Sol-Alt (bottom_left)"
+  echo "  [8] Orta-Alt (bottom_center)"
+  echo "  [9] Sağ-Alt (bottom_right)"
+  echo
+  read -rp "Seçim [mevcut: $(echo $cur_pos | tr '_' '-'), default: 3]: " pos_choice
+  pos_choice="${pos_choice:-3}"
+  
+  local selected_pos="top_right"
+  case "$pos_choice" in
+    1) selected_pos="top_left" ;;
+    2) selected_pos="top_center" ;;
+    3) selected_pos="top_right" ;;
+    4) selected_pos="middle_left" ;;
+    5) selected_pos="center" ;;
+    6) selected_pos="middle_right" ;;
+    7) selected_pos="bottom_left" ;;
+    8) selected_pos="bottom_center" ;;
+    9) selected_pos="bottom_right" ;;
+    *) warn "Geçersiz seçim"; return ;;
+  esac
+  
+  echo
+  echo "X Offset (yatay piksel) [mevcut: $cur_x, default: 16]"
+  read -rp "> " x
+  x="${x:-$cur_x}"
+  [[ "$x" =~ ^[0-9]+$ ]] || { warn "Geçersiz değer"; return; }
+  
+  echo "Y Offset (dikey piksel) [mevcut: $cur_y, default: 40]"
+  read -rp "> " y
+  y="${y:-$cur_y}"
+  [[ "$y" =~ ^[0-9]+$ ]] || { warn "Geçersiz değer"; return; }
+  
+  # Config dosyasına yaz
+  sed -i "s/^POSITION=.*/POSITION=$selected_pos/" "$CONF_FILE"
+  sed -i "s/^OFFSET_X=.*/OFFSET_X=$x/" "$CONF_FILE"
+  sed -i "s/^OFFSET_Y=.*/OFFSET_Y=$y/" "$CONF_FILE"
+  
+  # Conky'yi güncelle ve yeniden başlat
+  if declare -F conky_write_config >/dev/null 2>&1; then
+    conky_write_config
+  fi
+  if declare -F conky_restart >/dev/null 2>&1; then
+    conky_restart
+  fi
+  
+  say "Konum ayarları güncellendi: $selected_pos (X:$x Y:$y)"
+}
+
+menu_font_settings(){
+  config_load 2>/dev/null || true
+  local cur_font="${FONT_FAMILY:-Noto Sans Mono}"
+  local cur_size="${FONT_SIZE:-18}"
+  
+  echo
+  echo "Font Ailesi:"
+  echo "  [1] Ubuntu Mono"
+  echo "  [2] Noto Sans Mono ← default"
+  echo "  [3] DejaVu Sans Mono"
+  echo "  [4] Roboto Mono"
+  echo "  [5] JetBrains Mono"
+  echo "  [6] Courier New"
+  echo "  [7] Özel (kullanıcı girer)"
+  echo
+  read -rp "Seçim [mevcut: $cur_font, default: 2]: " font_choice
+  font_choice="${font_choice:-2}"
+  
+  local selected_font="Noto Sans Mono"
+  case "$font_choice" in
+    1) selected_font="Ubuntu Mono" ;;
+    2) selected_font="Noto Sans Mono" ;;
+    3) selected_font="DejaVu Sans Mono" ;;
+    4) selected_font="Roboto Mono" ;;
+    5) selected_font="JetBrains Mono" ;;
+    6) selected_font="Courier New" ;;
+    7) 
+      read -rp "Font adını girin: " custom_font
+      [[ -n "$custom_font" ]] && selected_font="$custom_font" || { warn "Boş font adı"; return; }
+      ;;
+    *) warn "Geçersiz seçim"; return ;;
+  esac
+  
+  echo
+  echo "Font Boyutu:"
+  echo "  [1] Küçük (14pt)"
+  echo "  [2] Normal (18pt) ← default"
+  echo "  [3] Büyük (22pt)"
+  echo "  [4] Çok Büyük (28pt)"
+  echo "  [5] Özel (12-32 arası)"
+  echo
+  read -rp "Seçim [mevcut: $cur_size, default: 2]: " size_choice
+  size_choice="${size_choice:-2}"
+  
+  local selected_size=18
+  case "$size_choice" in
+    1) selected_size=14 ;;
+    2) selected_size=18 ;;
+    3) selected_size=22 ;;
+    4) selected_size=28 ;;
+    5)
+      read -rp "Boyut (12-32): " custom_size
+      if [[ "$custom_size" =~ ^[0-9]+$ ]] && (( custom_size >= 12 && custom_size <= 32 )); then
+        selected_size="$custom_size"
+      else
+        warn "Geçersiz boyut (12-32 arası olmalı)"
+        return
+      fi
+      ;;
+    *) warn "Geçersiz seçim"; return ;;
+  esac
+  
+  # Config dosyasına yaz
+  sed -i "s/^FONT_FAMILY=.*/FONT_FAMILY=$selected_font/" "$CONF_FILE"
+  sed -i "s/^FONT_SIZE=.*/FONT_SIZE=$selected_size/" "$CONF_FILE"
+  
+  # Conky'yi güncelle ve yeniden başlat
+  if declare -F conky_write_config >/dev/null 2>&1; then
+    conky_write_config
+  fi
+  if declare -F conky_restart >/dev/null 2>&1; then
+    conky_restart
+  fi
+  
+  say "Font ayarları güncellendi: $selected_font, ${selected_size}pt"
+}
+
+menu_color_settings(){
+  config_load 2>/dev/null || true
+  local cur_bg="${PANEL_COLOR:-000000}"
+  local cur_fg="${TEXT_COLOR:-ffffff}"
+  local cur_opac="40"
+  
+  if [[ -f "$(_conky_cfg)" ]]; then
+    cur_opac=$(grep -oP 'own_window_argb_value = \K[0-9]+' "$(_conky_cfg)" 2>/dev/null || echo "40")
+  fi
+  
+  echo
+  echo "Panel Rengi (hex kod):"
+  echo "  [1] Siyah (000000) ← default"
+  echo "  [2] Koyu Gri (1a1a1a)"
+  echo "  [3] Mavi Ton (0d1117)"
+  echo "  [4] Özel (hex gir)"
+  echo
+  read -rp "Seçim [mevcut: $cur_bg, default: 1]: " bg_choice
+  bg_choice="${bg_choice:-1}"
+  
+  local selected_bg="000000"
+  case "$bg_choice" in
+    1) selected_bg="000000" ;;
+    2) selected_bg="1a1a1a" ;;
+    3) selected_bg="0d1117" ;;
+    4)
+      read -rp "Hex kod (örn: ff5500): " custom_bg
+      if [[ "$custom_bg" =~ ^[0-9a-fA-F]{6}$ ]]; then
+        selected_bg="$custom_bg"
+      else
+        warn "Geçersiz hex kod (6 karakter, 0-9 a-f)"
+        return
+      fi
+      ;;
+    *) warn "Geçersiz seçim"; return ;;
+  esac
+  
+  echo
+  echo "Metin Rengi (hex kod):"
+  echo "  [1] Beyaz (ffffff) ← default"
+  echo "  [2] Açık Gri (e0e0e0)"
+  echo "  [3] Yeşil (24d17e)"
+  echo "  [4] Mavi (3b8eea)"
+  echo "  [5] Özel (hex gir)"
+  echo
+  read -rp "Seçim [mevcut: $cur_fg, default: 1]: " fg_choice
+  fg_choice="${fg_choice:-1}"
+  
+  local selected_fg="ffffff"
+  case "$fg_choice" in
+    1) selected_fg="ffffff" ;;
+    2) selected_fg="e0e0e0" ;;
+    3) selected_fg="24d17e" ;;
+    4) selected_fg="3b8eea" ;;
+    5)
+      read -rp "Hex kod (örn: ff0000): " custom_fg
+      if [[ "$custom_fg" =~ ^[0-9a-fA-F]{6}$ ]]; then
+        selected_fg="$custom_fg"
+      else
+        warn "Geçersiz hex kod (6 karakter, 0-9 a-f)"
+        return
+      fi
+      ;;
+    *) warn "Geçersiz seçim"; return ;;
+  esac
+  
+  echo
+  echo "Panel Şeffaflığı (0-255, 0=tamamen şeffaf, 255=opak)"
+  read -rp "[mevcut: $cur_opac, default: 40]: " opac
+  opac="${opac:-$cur_opac}"
+  
+  if ! [[ "$opac" =~ ^[0-9]+$ ]] || (( opac < 0 || opac > 255 )); then
+    warn "Geçersiz şeffaflık değeri (0-255 arası)"
+    return
+  fi
+  
+  # Config dosyasına yaz
+  sed -i "s/^PANEL_COLOR=.*/PANEL_COLOR=$selected_bg/" "$CONF_FILE"
+  sed -i "s/^TEXT_COLOR=.*/TEXT_COLOR=$selected_fg/" "$CONF_FILE"
+  
+  # Conky'yi güncelle ve yeniden başlat
+  if declare -F conky_write_config >/dev/null 2>&1; then
+    conky_write_config
+  fi
+  
+  # Şeffaflığı ayrıca set et (eski fonksiyonu kullan)
+  if declare -F _set_conky_opacity >/dev/null 2>&1; then
+    _set_conky_opacity "$opac"
+  fi
+  
+  say "Renk ayarları güncellendi: Panel=#$selected_bg, Metin=#$selected_fg, Şeffaflık=$opac"
+}
+
 menu_appearance(){
   while :; do
     banner
@@ -400,10 +632,14 @@ menu_appearance(){
     echo -e "    ${GRN}[1]${NC} 🎭 Görsel Ayarlar"
     echo -e "        Sparkline, TL, Opaklık, Güncelleme zamanı"
     echo
-    echo -e "${BOLD}  (Yakında eklenecek)${NC}"
-    echo -e "    [2] 📍 Konum Ayarları"
-    echo -e "    [3] 🔤 Font ve Boyut"
-    echo -e "    [4] 🎨 Renk ve Tema"
+    echo -e "    ${GRN}[2]${NC} 📍 Konum Ayarları"
+    echo -e "        Ekranda konum ve offset ayarları"
+    echo
+    echo -e "    ${GRN}[3]${NC} 🔤 Font ve Boyut"
+    echo -e "        Yazı tipi ve büyüklüğü"
+    echo
+    echo -e "    ${GRN}[4]${NC} 🎨 Renk ve Tema"
+    echo -e "        Panel/metin rengi ve şeffaflık"
     echo
     echo -e "${CYAN}└────────────────────────────────────────────────────────────┘${NC}"
     echo
@@ -416,9 +652,17 @@ menu_appearance(){
         menu_visual_options
         read -rp "Devam için Enter..." _
         ;;
-      2|3|4)
-        warn "Bu özellik yakında eklenecek!"
-        sleep 2
+      2)
+        menu_position_settings
+        read -rp "Devam için Enter..." _
+        ;;
+      3)
+        menu_font_settings
+        read -rp "Devam için Enter..." _
+        ;;
+      4)
+        menu_color_settings
+        read -rp "Devam için Enter..." _
         ;;
       [Bb])
         return
