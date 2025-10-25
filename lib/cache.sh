@@ -142,7 +142,7 @@ render_once(){
       mapfile -t pts < "$HIST_FILE"
       local filtered=()
       for x in "${pts[@]}"; do [[ "$x" =~ ^-?[0-9]+([.][0-9]+)?$ ]] && filtered+=("$x"); done
-      ((${#filtered[@]}>1)) && { echo -n "BTC 24h: "; spark "${filtered[@]}"; echo; }
+      ((${#filtered[@]}>1)) && { echo -n "BTC 24h:   "; spark "${filtered[@]}"; echo; }
     fi
   } > "$RENDER_FILE"
   (( ${LOG_ENABLE:-1} )) && log "render updated"
