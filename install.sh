@@ -9,10 +9,21 @@ APP_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/$APP_ID"
 
 # Uygulama dosyalarını kullanıcı alanına kopyala
 mkdir -p "$APP_HOME"
-cp -a "$ROOT_DIR/"* "$APP_HOME/"
+
+# Sadece gerekli dosyaları kopyala
+echo "[*] Uygulama dosyaları kopyalanıyor..."
+cp "$ROOT_DIR/ticker.sh" "$APP_HOME/"
+cp "$ROOT_DIR/uninstall.sh" "$APP_HOME/"
+cp "$ROOT_DIR/LICENSE" "$APP_HOME/" 2>/dev/null || true
+
+# lib/ dizinini kopyala
+mkdir -p "$APP_HOME/lib"
+for f in "$ROOT_DIR/lib"/*.sh; do
+  [[ -f "$f" ]] && cp "$f" "$APP_HOME/lib/"
+done
 
 # Çalıştırma izinleri
-chmod +x "$APP_HOME"/*.sh "$APP_HOME"/lib/*.sh
+chmod +x "$APP_HOME"/*.sh "$APP_HOME"/lib/*.sh 2>/dev/null || true
 
 # Kurulum akışı
 bash -lc "
@@ -35,10 +46,11 @@ bash -lc "
   # Varsayılanları Conky backend'e uygun hale getir:
   # - PANGO kapalı (Conky düz metin okur)
   # - Altın kaynağı goldprice
-  # - Sparkline açık
+  # - Sparkline açık (18 nokta)
   sed -i 's/^USE_PANGO=.*/USE_PANGO=0/' \"\$CONF_FILE\" || true
   sed -i 's/^GOLD_SOURCE=.*/GOLD_SOURCE=goldprice/' \"\$CONF_FILE\" || true
   sed -i 's/^SHOW_SPARKLINE=.*/SHOW_SPARKLINE=1/' \"\$CONF_FILE\" || true
+  sed -i 's/^SPARK_POINTS=.*/SPARK_POINTS=18/' \"\$CONF_FILE\" || true
 
   # Wrapper komutları (~/.local/bin) oluştur
   mkdir -p \"\$HOME/.local/bin\"
@@ -61,7 +73,7 @@ E2
   cat > \"\$WRAP_SHOW\" <<'E3'
 #!/usr/bin/env bash
 set -euo pipefail
-FILE=\"$HOME/.cache/cal-ticker-v3/render.txt\"
+FILE=\"\$HOME/.cache/cal-ticker-v3/render.txt\"
 if [[ -s \"\$FILE\" ]]; then sed -n '1,10p' \"\$FILE\"; else echo -e \"BTC  : —\nETH  : —\nGOLD : —\"; fi
 E3
   chmod +x \"\$WRAP_SHOW\"
@@ -79,6 +91,6 @@ E3
 
 echo
 echo "[+] Kurulum tamam. Menü için:  cal-ticker"
-echo "    (Conky backend • sağ-üst • yarı saydam panel • sparkline • 15s timer)"
+echo "    (Conky backend • sağ-üst • yarı saydam panel • sparkline 18 nokta • 15s timer)"
 # Kullanıcıyı menüye sokmak istersen aç:
 "$APP_HOME/ticker.sh"
