@@ -24,9 +24,14 @@ conky_write_config() {
   local size="${FONT_SIZE:-18}"
   local x="${OFFSET_X:-16}"
   local y="${OFFSET_Y:-40}"
-  local opac="${PANEL_OPACITY:-40}"
   local bg_color="${PANEL_COLOR:-000000}"
   local text_color="${TEXT_COLOR:-ffffff}"
+  
+  # Şeffaflığı mevcut Conky config'inden oku, yoksa default 40 kullan
+  local opac="40"
+  if [[ -f "$CONKY_CFG" ]]; then
+    opac=$(grep -oP 'own_window_argb_value = \K[0-9]+' "$CONKY_CFG" 2>/dev/null || echo "40")
+  fi
   
   local alignment=""
   case "$pos" in
@@ -79,9 +84,34 @@ EOF
 }
 
 conky_restart() {
+  local timeout=5  # 5 saniye timeout
+  local elapsed=0
+  
+  # Önce kapat (SIGTERM)
   pkill -xf "conky -c $CONKY_CFG" 2>/dev/null || true
+  
+  # Process'in kapanmasını bekle
+  while pgrep -xf "conky -c $CONKY_CFG" >/dev/null 2>&1; do
+    if (( elapsed >= timeout )); then
+      warn "Conky yanıt vermiyor, zorla kapatılıyor..."
+      pkill -9 -xf "conky -c $CONKY_CFG" 2>/dev/null || true
+      sleep 1
+      break
+    fi
+    sleep 0.2
+    elapsed=$((elapsed + 1))
+  done
+  
+  # Yeniden başlat
   nohup conky -c "$CONKY_CFG" >/dev/null 2>&1 &
-  say "Conky yeniden başlatıldı."
+  
+  # Başladığını doğrula
+  sleep 0.5
+  if pgrep -xf "conky -c $CONKY_CFG" >/dev/null 2>&1; then
+    say "Conky yeniden başlatıldı."
+  else
+    warn "Conky başlatılamadı! Manuel kontrol edin."
+  fi
 }
 
 conky_autostart_enable() {
