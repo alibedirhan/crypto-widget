@@ -43,7 +43,7 @@ FX_SOURCE=exchangerate
 SHOW_TRY=1
 USE_PANGO=1
 SHOW_SPARKLINE=1
-SPARK_POINTS=40
+SPARK_POINTS=18
 LOG_ENABLE=1
 XAU_TTL=300
 FX_TTL=600
@@ -91,7 +91,7 @@ config_load(){
   
   : "${CRYPTO_SOURCE:=binance}" "${GOLD_SOURCE:=yahoo}" "${FX_SOURCE:=exchangerate}"
   : "${SHOW_TRY:=1}" "${USE_PANGO:=1}"
-  : "${SHOW_SPARKLINE:=1}" "${SPARK_POINTS:=40}" "${LOG_ENABLE:=1}"
+  : "${SHOW_SPARKLINE:=1}" "${SPARK_POINTS:=18}" "${LOG_ENABLE:=1}"
   : "${XAU_TTL:=300}" "${FX_TTL:=600}"
   : "${ALERT_COOLDOWN:=300}"
   : "${POSITION:=top_right}" "${FONT_FAMILY:=Noto Sans Mono}" "${FONT_SIZE:=18}"
