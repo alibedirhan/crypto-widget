@@ -6,10 +6,15 @@ dset(){ dconf write "${DCONF_BASE}/$1" "$2" 2>/dev/null || true; }
 
 group_int(){
   local i="$1"
+  # Validate input is a number
+  [[ "$i" =~ ^[0-9]+$ ]] || { printf "%s" "$i"; return; }
+  
   if command -v numfmt >/dev/null 2>&1; then
-    LC_NUMERIC=en_US.UTF-8 numfmt --grouping --to=none "$i" 2>/dev/null || printf "%s" "$i"
+    # Use numfmt with grouping (adds thousands separator)
+    LC_NUMERIC=en_US.UTF-8 numfmt --grouping "$i" 2>/dev/null || printf "%s" "$i"
   else
-    printf "%s" "$i"
+    # Fallback: manual grouping with sed (adds comma every 3 digits from right)
+    printf "%s" "$i" | sed ':a;s/\B[0-9]\{3\}\>/,&/;ta'
   fi
 }
 isnum(){ [[ "${1:-}" =~ ^-?[0-9]+([.][0-9]+)?$ ]]; }

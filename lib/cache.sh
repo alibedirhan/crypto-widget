@@ -140,7 +140,7 @@ render_once(){
 
     if (( ${SHOW_SPARKLINE:-1} )) && [[ -f "$HIST_FILE" ]]; then
       mapfile -t pts < "$HIST_FILE"
-      filtered=()
+      local filtered=()
       for x in "${pts[@]}"; do [[ "$x" =~ ^-?[0-9]+([.][0-9]+)?$ ]] && filtered+=("$x"); done
       ((${#filtered[@]}>1)) && { echo -n "BTC 24h: "; spark "${filtered[@]}"; echo; }
     fi
