@@ -1,9 +1,41 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+config_migrate(){
+  # Eski config dosyalarını güncelle (eksik değişkenleri ekle)
+  local updated=0
+  
+  # Kontrol edilecek değişkenler (key:default_value formatında)
+  local required_vars=(
+    "POSITION:top_right"
+    "FONT_FAMILY:Noto Sans Mono"
+    "FONT_SIZE:18"
+    "OFFSET_X:16"
+    "OFFSET_Y:40"
+    "PANEL_COLOR:000000"
+    "TEXT_COLOR:ffffff"
+  )
+  
+  for item in "${required_vars[@]}"; do
+    local key="${item%%:*}"
+    local default_val="${item#*:}"
+    
+    # Değişken yoksa ekle
+    if ! grep -q "^${key}=" "$CONF_FILE" 2>/dev/null; then
+      echo "${key}=${default_val}" >> "$CONF_FILE"
+      updated=1
+    fi
+  done
+  
+  if (( updated )); then
+    say "Config güncellendi (v3.1 değişkenleri eklendi)"
+  fi
+}
+
 config_ensure(){
-  [[ -f "$CONF_FILE" ]] && return 0
-  cat > "$CONF_FILE" <<EOF
+  if [[ ! -f "$CONF_FILE" ]]; then
+    # Yeni config oluştur
+    cat > "$CONF_FILE" <<EOF
 # === ${APP_ID} Config ===
 CRYPTO_SOURCE=binance
 GOLD_SOURCE=yahoo
@@ -28,7 +60,11 @@ OFFSET_Y=40
 PANEL_COLOR=000000
 TEXT_COLOR=ffffff
 EOF
-  say "Varsayılan config yazıldı: $CONF_FILE"
+    say "Varsayılan config yazıldı: $CONF_FILE"
+  else
+    # Mevcut config'i kontrol et ve eksik değişkenleri ekle
+    config_migrate
+  fi
 }
 
 config_load(){
